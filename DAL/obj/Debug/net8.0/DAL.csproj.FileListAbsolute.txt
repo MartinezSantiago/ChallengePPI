@@ -12,3 +12,4 @@ C:\Users\Usuario\Desktop\Programación\ChallengePPI\DAL\obj\Debug\net8.0\refint\
 C:\Users\Usuario\Desktop\Programación\ChallengePPI\DAL\obj\Debug\net8.0\DAL.pdb
 C:\Users\Usuario\Desktop\Programación\ChallengePPI\DAL\obj\Debug\net8.0\DAL.genruntimeconfig.cache
 C:\Users\Usuario\Desktop\Programación\ChallengePPI\DAL\obj\Debug\net8.0\ref\DAL.dll
+C:\Users\Usuario\Desktop\Programación\ChallengePPI\DAL\obj\Debug\net8.0\DAL.sourcelink.json

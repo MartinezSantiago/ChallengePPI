@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace BL.Services.Order.Strategies
 {
-    public class FCITotalAmountCalculationStrategy : ITotalAmountCalculationStrategy
+    public class MFTotalAmountCalculationStrategy : ITotalAmountCalculationStrategy
     {
         public decimal CalculateTotalAmount(Asset asset, CreateOrderDTO orderDto)
         {

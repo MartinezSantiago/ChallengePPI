@@ -24,7 +24,14 @@ namespace API.Controllers
             _orderService = orderService;
             _httpContextAccessor = httpContextAccessor;
         }
-
+        /// <summary>
+        /// Retrieves a specific order by its ID.
+        /// </summary>
+        /// <param name="id">The ID of the order to retrieve.</param>
+        /// <returns>The order details.</returns>
+        /// <response code="200">Returns the order details if found.</response>
+        /// <response code="404">If the order with the provided ID does not exist.</response>
+        /// <response code="500">If an unexpected error occurs during the process.</response>
         [HttpGet("{id}")]
         public async Task<ActionResult<ApiResponse<OrderDTO>>> GetOrderById(int id)
         {
@@ -44,6 +51,12 @@ namespace API.Controllers
                 return StatusCode(500, new ApiResponse<OrderDTO>(false, ex.Message, null));
             }
         }
+        /// <summary>
+        /// Retrieves all orders associated with the authenticated user.
+        /// </summary>
+        /// <returns>A list of orders.</returns>
+        /// <response code="200">Returns a list of orders.</response>
+        /// <response code="500">If an unexpected error occurs during the process.</response>
 
         [HttpGet]
         public async Task<ActionResult<ApiResponse<List<OrderDTO>>>> GetAllOrders()
@@ -60,6 +73,14 @@ namespace API.Controllers
                 return StatusCode(500, new ApiResponse<List<OrderDTO>>(false, ex.Message, null));
             }
         }
+        /// <summary>
+        /// Creates a new order for the authenticated user.
+        /// </summary>
+        /// <param name="orderDto">The details of the order to create.</param>
+        /// <returns>The created order details.</returns>
+        /// <response code="200">Returns the created order details.</response>
+        /// <response code="400">If the request body is invalid or missing required parameters.</response>
+        /// <response code="500">If an unexpected error occurs during the process.</response>
 
         [HttpPost]
         public async Task<ActionResult<ApiResponse<CreateOrderDTO>>> CreateOrder([FromBody] CreateOrderDTO orderDto)
@@ -82,6 +103,14 @@ namespace API.Controllers
                 return StatusCode(500, new ApiResponse<CreateOrderDTO>(false, ex.Message, null));
             }
         }
+        /// <summary>
+        /// Updates the status of a specific order.
+        /// </summary>
+        /// <param name="id">The ID of the order to update.</param>
+        /// <param name="orderStatusUpdateDto">The updated status of the order.</param>
+        /// <returns>No content if successful.</returns>
+        /// <response code="400">If the provided IDs do not match.</response>
+        /// <response code="500">If an unexpected error occurs during the process.</response>
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateOrder(int id, OrderStatusUpdateDTO orderStatusUpdateDto)
@@ -105,6 +134,14 @@ namespace API.Controllers
                 return StatusCode(500, new ApiResponse<object>(false, ex.Message, null));
             }
         }
+
+        /// <summary>
+        /// Deletes a specific order.
+        /// </summary>
+        /// <param name="id">The ID of the order to delete.</param>
+        /// <returns>No content if successful.</returns>
+        /// <response code="400">If an error occurs during deletion.</response>
+        /// <response code="500">If an unexpected error occurs during the process.</response>
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteOrder(int id)

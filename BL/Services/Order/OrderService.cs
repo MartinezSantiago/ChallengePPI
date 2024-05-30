@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using BL.DTOs;
+using BL.Enums;
 using BL.Services.Order.Interfaces;
 using BL.Services.Order.Strategies;
 using BL.Services.Order.Strategies.Interfaces;
@@ -18,7 +19,7 @@ namespace BL.Services.Order
         private readonly IAssetTypeRepository _assetTypeRepository;
         private readonly IOrderStatusRepository _orderStatusRepository;
         private readonly IMapper _mapper;
-        private Dictionary<string, ITotalAmountCalculationStrategy> _calculationStrategies;
+        private Dictionary<AssetTypeEnum, ITotalAmountCalculationStrategy> _calculationStrategies;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -27,34 +28,48 @@ namespace BL.Services.Order
             IOrderStatusRepository orderStatusRepository,
             IMapper mapper)
         {
-            _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
-            _assetRepository = assetRepository ?? throw new ArgumentNullException(nameof(assetRepository));
-            _assetTypeRepository = assetTypeRepository ?? throw new ArgumentNullException(nameof(assetTypeRepository));
-            _orderStatusRepository = orderStatusRepository ?? throw new ArgumentNullException(nameof(orderStatusRepository));
-            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-            _calculationStrategies = new Dictionary<string, ITotalAmountCalculationStrategy>();
+            _orderRepository = orderRepository;
+            _assetRepository = assetRepository;
+            _assetTypeRepository = assetTypeRepository;
+            _orderStatusRepository = orderStatusRepository;
+            _mapper = mapper;
+            _calculationStrategies = new Dictionary<AssetTypeEnum, ITotalAmountCalculationStrategy>();
         }
+
         public async Task InitializeAsync()
         {
             _calculationStrategies = await GetCalculationStrategiesAsync();
         }
-        private async Task<Dictionary<string, ITotalAmountCalculationStrategy>> GetCalculationStrategiesAsync()
+        private async Task<Dictionary<AssetTypeEnum, ITotalAmountCalculationStrategy>> GetCalculationStrategiesAsync()
         {
             var assetTypes = await _assetTypeRepository.GetAllAsync();
-            var strategies = new Dictionary<string, ITotalAmountCalculationStrategy>();
+            var strategies = new Dictionary<AssetTypeEnum, ITotalAmountCalculationStrategy>();
 
             foreach (var assetType in assetTypes)
             {
-                // Concatenate strategy name with TotalAmountCalculationStrategy suffix
-                var strategyName = assetType.Description + "TotalAmountCalculationStrategy";
-
-                // Dynamically instantiate the strategy using reflection
-                var strategyType = Type.GetType("BL.Services.Order.Strategies." + strategyName);
-                if (strategyType != null)
+                if (!Enum.TryParse(assetType.Description, out AssetTypeEnum assetTypeEnum))
                 {
-                    var strategyInstance = (ITotalAmountCalculationStrategy)Activator.CreateInstance(strategyType);
-                    strategies.Add(assetType.Description, strategyInstance);
+                    throw new InvalidOperationException("Invalid asset type.");
                 }
+
+                ITotalAmountCalculationStrategy strategy;
+
+                switch (assetTypeEnum)
+                {
+                    case AssetTypeEnum.MF:
+                        strategy = new MFTotalAmountCalculationStrategy();
+                        break;
+                    case AssetTypeEnum.Bond:
+                        strategy = new BondTotalAmountCalculationStrategy();
+                        break;
+                    case AssetTypeEnum.Stock:
+                        strategy = new StockTotalAmountCalculationStrategy();
+                        break;
+                    default:
+                        throw new InvalidOperationException("Invalid asset type.");
+                }
+
+                strategies.Add(assetTypeEnum, strategy);
             }
 
             return strategies;
@@ -73,20 +88,23 @@ namespace BL.Services.Order
                 throw new InvalidOperationException("Asset type not found.");
             }
 
-
             var order = _mapper.Map<DAL.Models.Order>(orderDto);
 
             await InitializeAsync();
-            var assetTypeDescription = assetType.Description;
-            if (!_calculationStrategies.TryGetValue(assetTypeDescription, out var strategy))
+
+            if (!Enum.TryParse(assetType.Description, out AssetTypeEnum assetTypeEnum))
             {
                 throw new InvalidOperationException("Invalid asset type.");
             }
 
+            if (!_calculationStrategies.TryGetValue(assetTypeEnum, out var strategy))
+            {
+                throw new InvalidOperationException("Strategy not found for asset type.");
+            }
+
             order.TotalAmount = strategy.CalculateTotalAmount(asset, orderDto);
 
-            var defaultStatusId = await _orderStatusRepository.GetDefaultOrderStatusAsync();
-            order.StatusId = defaultStatusId.Id;
+            order.StatusId = (int)OrderStatusEnum.InProcess;
 
             await _orderRepository.AddAsync(order);
         }
@@ -108,7 +126,7 @@ namespace BL.Services.Order
             var order = await _orderRepository.GetByIdAsync(orderStatusUpdateDto.OrderId);
             if (order == null || order.AccountId != userId)
             {
-                throw new InvalidOperationException("Order not found or user does not have permission to update this order.");
+                throw new InvalidOperationException("Order not found.");
             }
 
             var newStatus = await _orderStatusRepository.GetByIdAsync(orderStatusUpdateDto.NewStatusId);
@@ -117,15 +135,21 @@ namespace BL.Services.Order
                 throw new InvalidOperationException("New order status not found.");
             }
 
-            if (order.Status.StatusDescription != "In process")
+            if (order.StatusId != (int)OrderStatusEnum.InProcess)
             {
-                throw new InvalidOperationException("Only can update status from 'In process'");
+                throw new InvalidOperationException("Only can update status when status is 'In process'");
+            }
+
+            if (newStatus.Id == (int)OrderStatusEnum.InProcess)
+            {
+                throw new InvalidOperationException("Only can update status to 'Exectued' or 'Cancelled'");
             }
 
             order.StatusId = newStatus.Id;
 
             await _orderRepository.UpdateAsync(order);
         }
+
 
 
         public async Task DeleteOrderAsync(int orderId, int userId)

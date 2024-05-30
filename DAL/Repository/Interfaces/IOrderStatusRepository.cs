@@ -9,6 +9,5 @@ namespace DAL.Repository.Interfaces
 {
     public interface IOrderStatusRepository : IRepository<OrderStatus>
     {
-        public Task<OrderStatus> GetDefaultOrderStatusAsync();
     }
 }

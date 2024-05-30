@@ -18,10 +18,5 @@ namespace DAL.Repository
         {
             _context = context;
         }
-
-        public async Task<OrderStatus> GetDefaultOrderStatusAsync()
-        {
-            return await _context.Set<OrderStatus>().FirstOrDefaultAsync(os => os.StatusDescription == "In process");
-        }
     }
 }

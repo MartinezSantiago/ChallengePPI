@@ -28,3 +28,4 @@ Ejecutar Migraciones de la Base de Datos:
 Add-Migration, update-database, para generar el esquema en la base de datos.
 
 PD: No llegué a probar el Docker Desktop =), se me rompió.
+-Deje el appsettings.json con las credenciales. Obviamente una mala práctica, pero para que se vea como lo había implementado.

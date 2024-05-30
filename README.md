@@ -29,3 +29,4 @@ Add-Migration, update-database, para generar el esquema en la base de datos.
 
 PD: No llegué a probar el Docker Desktop =), se me rompió.
 -Deje el appsettings.json con las credenciales. Obviamente una mala práctica, pero para que se vea como lo había implementado.
+-Hice todo en inglés, sé que estaban en español los modelos, pero más que nada para hacerlo más ágil.

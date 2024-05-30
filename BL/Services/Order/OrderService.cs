@@ -18,7 +18,7 @@ namespace BL.Services.Order
         private readonly IAssetTypeRepository _assetTypeRepository;
         private readonly IOrderStatusRepository _orderStatusRepository;
         private readonly IMapper _mapper;
-        private readonly Dictionary<string, ITotalAmountCalculationStrategy> _calculationStrategies;
+        private Dictionary<string, ITotalAmountCalculationStrategy> _calculationStrategies;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -32,14 +32,33 @@ namespace BL.Services.Order
             _assetTypeRepository = assetTypeRepository ?? throw new ArgumentNullException(nameof(assetTypeRepository));
             _orderStatusRepository = orderStatusRepository ?? throw new ArgumentNullException(nameof(orderStatusRepository));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-            _calculationStrategies = new Dictionary<string, ITotalAmountCalculationStrategy>
-            {
-                { "FCI", new FCITotalAmountCalculationStrategy() },
-                { "Stock", new StockTotalAmountCalculationStrategy() },
-                { "Bond", new BondTotalAmountCalculationStrategy() }
-            };
+            _calculationStrategies = new Dictionary<string, ITotalAmountCalculationStrategy>();
         }
+        public async Task InitializeAsync()
+        {
+            _calculationStrategies = await GetCalculationStrategiesAsync();
+        }
+        private async Task<Dictionary<string, ITotalAmountCalculationStrategy>> GetCalculationStrategiesAsync()
+        {
+            var assetTypes = await _assetTypeRepository.GetAllAsync();
+            var strategies = new Dictionary<string, ITotalAmountCalculationStrategy>();
 
+            foreach (var assetType in assetTypes)
+            {
+                // Concatenate strategy name with TotalAmountCalculationStrategy suffix
+                var strategyName = assetType.Description + "TotalAmountCalculationStrategy";
+
+                // Dynamically instantiate the strategy using reflection
+                var strategyType = Type.GetType("BL.Services.Order.Strategies." + strategyName);
+                if (strategyType != null)
+                {
+                    var strategyInstance = (ITotalAmountCalculationStrategy)Activator.CreateInstance(strategyType);
+                    strategies.Add(assetType.Description, strategyInstance);
+                }
+            }
+
+            return strategies;
+        }
         public async Task CreateOrderAsync(CreateOrderDTO orderDto)
         {
             var asset = await _assetRepository.GetByIdAsync(orderDto.AssetId);
@@ -57,7 +76,9 @@ namespace BL.Services.Order
 
             var order = _mapper.Map<DAL.Models.Order>(orderDto);
 
-            if (!_calculationStrategies.TryGetValue(assetType.Description, out var strategy))
+            await InitializeAsync();
+            var assetTypeDescription = assetType.Description;
+            if (!_calculationStrategies.TryGetValue(assetTypeDescription, out var strategy))
             {
                 throw new InvalidOperationException("Invalid asset type.");
             }
@@ -87,18 +108,25 @@ namespace BL.Services.Order
             var order = await _orderRepository.GetByIdAsync(orderStatusUpdateDto.OrderId);
             if (order == null || order.AccountId != userId)
             {
-                throw new InvalidOperationException("Order not found.");
+                throw new InvalidOperationException("Order not found or user does not have permission to update this order.");
             }
+
             var newStatus = await _orderStatusRepository.GetByIdAsync(orderStatusUpdateDto.NewStatusId);
             if (newStatus == null)
             {
                 throw new InvalidOperationException("New order status not found.");
             }
 
+            if (order.Status.StatusDescription != "In process")
+            {
+                throw new InvalidOperationException("Only can update status from 'In process'");
+            }
+
             order.StatusId = newStatus.Id;
 
             await _orderRepository.UpdateAsync(order);
         }
+
 
         public async Task DeleteOrderAsync(int orderId, int userId)
         {

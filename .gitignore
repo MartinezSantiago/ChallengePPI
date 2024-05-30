@@ -1,0 +1,8 @@
+﻿################################################################################
+# Este archivo .gitignore ha sido creado automáticamente por Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/ChallengePPI/v17/.suo
+/.vs/ChallengePPI/v17/DocumentLayout.json
+/API/bin/Debug/net8.0/API.dll
+/.vs/ChallengePPI/FileContentIndex/4d9f5c80-d9c4-46b5-bf21-c80595226769.vsidx

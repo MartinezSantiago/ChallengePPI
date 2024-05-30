@@ -13,3 +13,4 @@ C:\Users\Usuario\Desktop\Programación\ChallengePPI\BL\obj\Debug\net8.0\BL.dll
 C:\Users\Usuario\Desktop\Programación\ChallengePPI\BL\obj\Debug\net8.0\refint\BL.dll
 C:\Users\Usuario\Desktop\Programación\ChallengePPI\BL\obj\Debug\net8.0\BL.pdb
 C:\Users\Usuario\Desktop\Programación\ChallengePPI\BL\obj\Debug\net8.0\ref\BL.dll
+C:\Users\Usuario\Desktop\Programación\ChallengePPI\BL\obj\Debug\net8.0\BL.sourcelink.json

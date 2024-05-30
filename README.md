@@ -27,4 +27,4 @@ Docker Desktop (Opcional)
 Ejecutar Migraciones de la Base de Datos:
 Add-Migration, update-database, para generar el esquema en la base de datos.
 
-PD: No llegué a probar el Docker Desktop.
+PD: No llegué a probar el Docker Desktop =), se me rompió.
